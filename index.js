@@ -52,7 +52,7 @@ function binarySearch(arr, x) {
   let l = 0, r = arr.length - 1;
   while (l <= r) {
     let m = l + Math.floor((r - l) / 2);
-    let res = x.localeCompare(arr[m]);
+    let res = x.localeCompare(arr[m][0]);
     // Check if x is present at mid
     if (res == 0)
       return m;
@@ -111,6 +111,7 @@ client.on('messageCreate', (message) => {
     message.reply({
       content: 'sadece harf kullanmalısınız!'
     })
+    message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
@@ -120,6 +121,7 @@ client.on('messageCreate', (message) => {
     message.reply({
       content: 'sadece tek kelime kullanmalısınız!'
     })
+    message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
@@ -133,14 +135,30 @@ client.on('messageCreate', (message) => {
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
   }
-
-
-  if (binarySearch(dictionary, word) == -1) {
-    message.reply(`${taam}
-son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
+  
+  let wordIndex = binarySearch(keyValueDictionary, word); // returns -1 if no match is found
+  console.log("wordIndex "+wordIndex);
+  if (wordIndex == -1) {
+      message.reply(`${taam}`);
+      message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
+    let t1 = performance.now();
+    console.log("replied in " + (t1 - t0) + " milliseconds.");
+    return;
   }
+
+  if (keyValueDictionary[wordIndex][1]) {
+    message.reply({
+      content: 'bu kelime zaten kullanıldı!'
+    })
+    let t1 = performance.now();
+    console.log("replied in " + (t1 - t0) + " milliseconds.");
+    return;
+  }  
+  
+  // SUCCESS  
   else {
     message.react('✅');
+    keyValueDictionary[wordIndex][1] = 1;
     startingLetter = word.slice(-1);
   }
   let t1 = performance.now();
@@ -148,5 +166,3 @@ son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
 })
 
 client.login(process.env.DISCORD_TOKEN);
-
-
