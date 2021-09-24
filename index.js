@@ -30,6 +30,13 @@ dictionary.sort(function(a, b) {
   return a.localeCompare(b);
 });
 
+// Convert dict into key-value array
+var keyValueDictionary = dictionary.map(x => [x,0]);
+  
+console.log(keyValueDictionary[1000]);
+console.log(dictionary[1000]);
+
+
 // database
 const dictDB = new Database();
 
