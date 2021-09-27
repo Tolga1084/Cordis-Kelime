@@ -10,7 +10,6 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 
 /* FEATURES TO IMPLEMENT
   - command system
-  - implement rule: the same player cannot submit words back to back.
   - end conditions
   - styled messages for informing users. -- score tables, starting letter etc... --
   - scoring
@@ -102,10 +101,11 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-
+//Evaluate the answer
+var lastAnswerer;
 client.on('messageCreate', (message) => {
 
-  // get emotes
+  // get emotes -- !! move these out of the event handler once the channel is set !! --
   let emote0 = performance.now();
   let altarSopali = message.guild.emojis.cache.find(emoji => emoji.name === "altarsopali");
   let taam = message.guild.emojis.cache.find(emoji => emoji.name === "taamtaaminandim");
@@ -113,6 +113,7 @@ client.on('messageCreate', (message) => {
   console.log("emotes found in " + (emote1 - emote0) + " milliseconds.");
 
   word = message.content.toString().toLocaleLowerCase('tr');
+  
 
   console.log(word);
   let t0 = performance.now();
@@ -124,6 +125,20 @@ client.on('messageCreate', (message) => {
       content: 'sadece harf kullanabilirsin!' + `${altarSopali}`
     })
     remindStartingLetter(startingLetter,message);
+    let t1 = performance.now();
+    console.log("replied in " + (t1 - t0) + " milliseconds.");
+    return;
+  }
+
+  console.log('lastAnswerer '+lastAnswerer);
+  console.log('messageAuthor '+message.author);
+  if (lastAnswerer === message.author) {
+
+    message.reply({
+      content: 'sen sıranı savdın!' + `${altarSopali}`
+    })
+    remindStartingLetter(startingLetter,message);
+    return;
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
@@ -178,6 +193,7 @@ client.on('messageCreate', (message) => {
     message.react('✅');
     keyValueDictionary[wordIndex][1] = 1;
     startingLetter = word.slice(-1);
+    lastAnswerer = message.author;
   }
   let t1 = performance.now();
   console.log("replied in " + (t1 - t0) + " milliseconds.");
