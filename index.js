@@ -9,8 +9,14 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 // ================= START BOT CODE ===================
 
 /* FEATURES TO IMPLEMENT
-  - option to make the bot a player
+  - command system
+  - implement rule: the same player cannot submit words back to back.
+  - end conditions
+  - styled messages for informing users. -- score tables, starting letter etc... --
+  - scoring
+  - option for players to play against the bot
   - suggest a word if a player asks for help -- could have limited uses per player for each day --
+  - suggestions to correct typos in answers: "did you mean ... ?"
 */
 const { Client, Intents } = require('discord.js');
 const { PerformanceObserver, performance } = require('perf_hooks');
@@ -86,6 +92,11 @@ function checkStartingLetter(str, startingLetter) {
   return str.startsWith(startingLetter.toLocaleLowerCase('tr'));
 }
 
+function remindStartingLetter(startingLetter, message) {
+  message.channel.send({
+      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase('tr')}**`
+    })
+}
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -93,7 +104,6 @@ client.on('ready', () => {
 
 
 client.on('messageCreate', (message) => {
-  word = message.content.toString().toLocaleLowerCase('tr');
 
   // get emotes
   let emote0 = performance.now();
@@ -102,6 +112,8 @@ client.on('messageCreate', (message) => {
   let emote1 = performance.now();
   console.log("emotes found in " + (emote1 - emote0) + " milliseconds.");
 
+  word = message.content.toString().toLocaleLowerCase('tr');
+
   console.log(word);
   let t0 = performance.now();
   if (message.author.bot) return;
@@ -109,38 +121,44 @@ client.on('messageCreate', (message) => {
 
   if (!isLetter(word)) {
     message.reply({
-      content: 'sadece harf kullanmalısınız!'
+      content: 'sadece harf kullanabilirsin!' + `${altarSopali}`
     })
-    message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
+    remindStartingLetter(startingLetter,message);
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
   }
 
   if (!isOneWord(word)) {
+
     message.reply({
-      content: 'sadece tek kelime kullanmalısınız!'
+      content: 'sadece tek kelime kullanabilirsin!' + `${altarSopali}`
     })
-    message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
+    remindStartingLetter(startingLetter,message);
+
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
   }
 
   if (!checkStartingLetter(word, startingLetter)) {
+
     message.reply({
-      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase('tr')}**` + ' olmalı! ' + `${altarSopali}`
+      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase('tr')}**` + `${altarSopali}`
     })
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
   }
   
-  let wordIndex = binarySearch(keyValueDictionary, word); // returns -1 if no match is found
+  let wordIndex = binarySearch(keyValueDictionary, 
+  word); // returns -1 if no match is found
   console.log("wordIndex "+wordIndex);
+  
   if (wordIndex == -1) {
       message.reply(`${taam}`);
-      message.channel.send(`son harf **${startingLetter.toLocaleUpperCase('tr')}**`);
+      remindStartingLetter(startingLetter,message);
+
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
@@ -148,7 +166,7 @@ client.on('messageCreate', (message) => {
 
   if (keyValueDictionary[wordIndex][1]) {
     message.reply({
-      content: 'bu kelime zaten kullanıldı!'
+      content: 'bu kelime zaten kullanıldı!' + `${altarSopali}`
     })
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
