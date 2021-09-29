@@ -10,7 +10,6 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 
 /* FEATURES TO IMPLEMENT
   - command system
-  - end conditions
   - styled messages for informing users. -- score tables, starting letter etc... --
   - scoring
   - option for players to play against the bot
@@ -28,33 +27,55 @@ const Database = require("@replit/database");
 // server uptime
 console.time("upTime");
 
+// database
+const dictDB = new Database();
+
 // Import dictionary.txt to array
 var fs = require("fs");
 var TR = fs.readFileSync("./TDK.txt");
 var dictionary = TR.toString().toLowerCase().split("\n");
 
-
 // Sort Turkish characters alphabetically
 dictionary.sort(function(a, b) {
-  return a.localeCompare(b);
+  return a.localeCompare(b,"tr-TR");
 });
 
-// Get dictionary copy to keep track of unused words
-const remainingWords = dictionary.slice();
 
-// Convert dict into key-value array
-var keyValueDictionary = dictionary.map(x => [x,0]);
-  
-console.log(keyValueDictionary[1000]);
-console.log(dictionary[1000]);
+// INITIALISE THE GAME
+var remainingWords = []
+var keyValueDictionary = []
+var startingLetter;
+var depletedInitials = []
+var winAnswerCountLimit;
+var lastAnswerer;
+var answerCount = 0;
+var winFlag = false;
 
-// database
-const dictDB = new Database();
+function initialise(dictionary,winCount){
+  // Get dictionary copy to keep track of unused words
+  remainingWords = dictionary.slice();
 
-// Initialise starting letter
-var startingLetter = dictionary[(Math.floor(Math.random() * dictionary.length))].toString().charAt(0);
-console.log('startingLetter is ' + startingLetter);
+  // Convert dict into key-value array
+  keyValueDictionary = dictionary.map(x => [x,0]);
+    
+  console.log(keyValueDictionary[1000]);
+  console.log(dictionary[1000]);
 
+  // Initialise starting letter
+  startingLetter = dictionary[(Math.floor(Math.random() * dictionary.length))].toString().charAt(0);
+  console.log('startingLetter is ' + startingLetter);
+
+  // set depleted initials
+  depletedInitials = [];
+
+  // config
+  winAnswerCountLimit = winCount;
+
+  // initialise values
+  lastAnswerer = undefined;
+  answerCount = 0;
+  winFlag = false;
+}
 
 // Binary Search to check if a word(x) exist in the keyValueDictionary(arr)
 // Returns index of x if it is present in arr[],
@@ -63,7 +84,7 @@ function checkWord(arr, x) {
   let l = 0, r = arr.length - 1;
   while (l <= r) {
     let m = l + Math.floor((r - l) / 2);
-    let res = x.localeCompare(arr[m][0]);
+    let res = x.localeCompare(arr[m][0],"tr-TR");
     // Check if x is present at mid
     if (res == 0)
       return m;
@@ -76,7 +97,6 @@ function checkWord(arr, x) {
     else
       r = m - 1;
   }
-
   return -1;
 }
 
@@ -88,7 +108,7 @@ function checkRemainingWords(arr, x) {
   while (l <= r) {
     let m = l + Math.floor((r - l) / 2);
     //console.log(arr[m] + "  " + arr[m])
-    let res = x.localeCompare(arr[m]);
+    let res = x.localeCompare(arr[m],"tr-TR");
     // Check if x is present at mid
     if (res == 0)
       return m;
@@ -101,7 +121,6 @@ function checkRemainingWords(arr, x) {
     else
       r = m - 1;
   }
-
   return -1;
 }
 
@@ -119,17 +138,16 @@ function isOneWord(str) {
 }
 
 function checkStartingLetter(str, startingLetter) {
-  return str.startsWith(startingLetter.toLocaleLowerCase('tr'));
+  return str.startsWith(startingLetter.toLocaleLowerCase("tr-TR"));
 }
 
 function remindStartingLetter(startingLetter, message) {
   message.channel.send({
-      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase('tr')}**`
+      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase("tr-TR")}**`
     })
 }
 
 // Keep track of depleted initials
-const depletedInitials = ['ğ'];
 function isLastRemainingInitial (remainingWordIndex,remainingWords) {
   let t0 = performance.now();
   let initial = remainingWords[remainingWordIndex].charAt(0);
@@ -137,7 +155,10 @@ function isLastRemainingInitial (remainingWordIndex,remainingWords) {
   let nextWordInitial;
   let result = false;
 
+  console.log("initial "+ initial);
   if (remainingWordIndex != 0){
+    console.log("pwi word "+remainingWords[remainingWordIndex-1]+ " index " + (remainingWordIndex-1) );
+    
     let previousWordInitial = remainingWords[remainingWordIndex-1].charAt(0);
     console.log("pwi "+previousWordInitial);
     result = (previousWordInitial == initial);
@@ -145,9 +166,11 @@ function isLastRemainingInitial (remainingWordIndex,remainingWords) {
   }
   console.log("rw.length " + remainingWords.length);
   if (remainingWordIndex != remainingWords.length){
+    console.log("nwi word "+remainingWords[remainingWordIndex+1]+ " index " + (remainingWordIndex+1));
     let nextWordInitial = remainingWords[remainingWordIndex+1].charAt(0);
     console.log("nwi "+ nextWordInitial);
-    result = result || (previousWordInitial == initial);
+    console.log("nwi==init "+ (nextWordInitial == initial));
+    result = result || (nextWordInitial == initial);
     console.log("result "+result);
   }
   if(result) {
@@ -165,13 +188,10 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-// config
-const winAnswerCountLimit = 3;
+//start the game
+initialise(dictionary,200);
 
 //Evaluate the answer
-var lastAnswerer;
-var answerCount = 0;
-var winFlag = false;
 
 client.on('messageCreate', (message) => {
   console.timeLog("upTime");
@@ -182,7 +202,7 @@ client.on('messageCreate', (message) => {
   let emote1 = performance.now();
   console.log("emotes found in " + (emote1 - emote0) + " milliseconds.");
 
-  word = message.content.toString().toLocaleLowerCase('tr');
+  word = message.content.toString().toLocaleLowerCase("tr-TR");
   
 
   console.log(word);
@@ -229,7 +249,7 @@ client.on('messageCreate', (message) => {
   if (!checkStartingLetter(word, startingLetter)) {
 
     message.reply({
-      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase('tr')}**` + `${altarSopali}`
+      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase("tr-TR")}**` + `${altarSopali}`
     })
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
@@ -285,8 +305,10 @@ client.on('messageCreate', (message) => {
       content: 'oyun bitti'
       })
       winFlag = false;
+      initialise(dictionary,2);
       let t1 = performance.now();
       console.log("replied in " + (t1 - t0) + " milliseconds.");
+      return;
     }
 
     // Assign lastletter and mark the word as used and remove it from the remainingWords. check if initial is depleted.
@@ -299,7 +321,7 @@ client.on('messageCreate', (message) => {
     //lastAnswerer = message.author;
   }
   let t1 = performance.now();
-  console.log("replied in " + (t1 - t0) + " milliseconds.");
+  console.log("replied in " + (t1 - t0) + " milliseconds.\n\n");
 })
 
 client.login(process.env.DISCORD_TOKEN);

@@ -5125,7 +5125,6 @@ azvay
 âşıktaş
 âşıktaşlık
 âyan
-B
 b
 Ba
 baba
@@ -10396,7 +10395,6 @@ büzüşük
 büzüşüklük
 büzüşüverme
 büzüşüvermek
-C
 c
 Ca
 caba
@@ -11518,7 +11516,6 @@ cüzdan
 cüzi
 cüzzam
 cüzzamlı
-ç
 çaba
 çabalama
 çabalamak
@@ -14162,7 +14159,6 @@ cüzzamlı
 çürüyüverme
 çürüyüvermek
 çüş
-D
 d
 da
 Dadacı
@@ -20865,7 +20861,6 @@ ezogelin
 ezoterik
 e-mail
 e-posta
-F
 f
 fa
 faal
@@ -22302,8 +22297,7 @@ füzen
 füzesavar
 füzyometre
 füzyon
-g
-Ga
+ga
 gabardin
 gabari
 gabavet
@@ -24999,10 +24993,7 @@ güzleme
 güzlemek
 güzlük
 güzün
-ğ
-H
 h
-Ha
 ha
 hab
 habanera
@@ -27905,8 +27896,6 @@ hüzzam
 ızrar
 ıztırar
 ıztırari
-i
-I
 iade
 iadeiitibar
 iadeiziyaret
@@ -30342,7 +30331,6 @@ izzetüikram
 İzmirlilik
 İzmit
 İznik
-j
 jaguar
 jakar
 jakarlı
@@ -30463,7 +30451,6 @@ jüpon
 jüri
 jüt
 k
-K
 kaba
 kababurun
 kabaca
@@ -38040,7 +38027,6 @@ kütürdetme
 kütürdetmek
 kütürtü
 küvet
-L
 l
 La
 la
@@ -38806,7 +38792,6 @@ lüzumsuz
 lüzumsuzca
 lüzumsuzluk
 lüzumundan
-M
 m
 maada
 maaile
@@ -42768,7 +42753,6 @@ müzminleştirme
 müzminleştirmek
 müzminlik
 Mv
-N
 n
 Na
 naaş
@@ -43836,7 +43820,6 @@ nüve
 nüzul
 nüzullü
 o
-O
 oba
 obabaşı
 obelisk
@@ -45931,7 +45914,6 @@ ozuga
 özverililik
 özverisiz
 özverisizlik
-P
 p
 Pa
 pabucu
@@ -48142,7 +48124,6 @@ pütürlenmek
 pütürlü
 pütürsüz
 pütürsüzlük
-r
 Ra
 Rab
 rabbani
@@ -49075,7 +49056,6 @@ rüzgârölçer
 rüzgârsız
 rüzgârsızlık
 rüzgârüstü
-S
 s
 saadet
 saadethane
@@ -54248,7 +54228,6 @@ süzülüş
 süzüm
 süzüntü
 süzüş
-ş
 şaban
 şabanlaşma
 şabanlaşmak
@@ -55375,7 +55354,6 @@ süzüş
 şüyu
 şüyuu
 şvester
-T
 t
 ta
 Ta
@@ -59577,7 +59555,6 @@ tüzellik
 tüzük
 tvist
 tvistçi
-U
 u
 ubudiyet
 uca
@@ -60439,7 +60416,6 @@ uzuv
 uzuvca
 uzvi
 uzviyet
-ü
 ücra
 ücret
 ücretlendirme
@@ -60862,7 +60838,6 @@ uzviyet
 üzüntüsüz
 üzüntüsüzlük
 v
-V
 vaadinde
 vaadini
 vaat
@@ -61710,7 +61685,6 @@ vürut
 vüsat
 vüzera
 y
-Y
 ya
 yaba
 yabalama
@@ -64740,7 +64714,6 @@ yüzüvermek
 yüzyıl
 yüzyıllarca
 yüzyıllık
-z
 zaaf
 zaafa
 zabıt
