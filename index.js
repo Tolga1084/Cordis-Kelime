@@ -42,31 +42,39 @@ dictionary.sort(function(a, b) {
 
 
 // INITIALISE THE GAME
-var remainingWords = []
-var keyValueDictionary = []
+var remainingWords = [];
+var keyValueDictionary = [];
 var startingLetter;
-var depletedInitials = []
+var depletedInitials = [];
 var winAnswerCountLimit;
 var lastAnswerer;
 var answerCount = 0;
 var winFlag = false;
+var altarSopali;
+var taam;
+var altar;
+var cemismont;
+var ever;
+var ebu_leheb;
+var gate = false;
+var channel = undefined;
 
-function initialise(dictionary,winCount){
+function initialise(dictionary,winCount,message){
+  // restrict listening, to the channel the message is sent on
+  channel = message.channel;
+
   // Get dictionary copy to keep track of unused words
   remainingWords = dictionary.slice();
 
   // Convert dict into key-value array
   keyValueDictionary = dictionary.map(x => [x,0]);
-    
-  console.log(keyValueDictionary[1000]);
-  console.log(dictionary[1000]);
 
   // Initialise starting letter
   startingLetter = dictionary[(Math.floor(Math.random() * dictionary.length))].toString().charAt(0);
   console.log('startingLetter is ' + startingLetter);
 
   // set depleted initials
-  depletedInitials = [];
+  depletedInitials = ['ğ'];
 
   // config
   winAnswerCountLimit = winCount;
@@ -75,6 +83,17 @@ function initialise(dictionary,winCount){
   lastAnswerer = undefined;
   answerCount = 0;
   winFlag = false;
+
+  // get emojis
+  altarSopali = message.guild.emojis.cache.find(emoji => emoji.name === "altarsopali");
+  taam = message.guild.emojis.cache.find(emoji => emoji.name === "taamtaaminandim");
+  altar = message.guild.emojis.cache.find(emoji => emoji.name === "altar");
+  cemismont = message.guild.emojis.cache.find(emoji => emoji.name === "cemismont");
+  ever = message.guild.emojis.cache.find(emoji => emoji.name === "ever");
+  ebu_leheb = message.guild.emojis.cache.find(emoji => emoji.name === "ebu_leheb");
+
+  // let the game start
+  gate = true;
 }
 
 // Binary Search to check if a word(x) exist in the keyValueDictionary(arr)
@@ -143,7 +162,7 @@ function checkStartingLetter(str, startingLetter) {
 
 function remindStartingLetter(startingLetter, message) {
   message.channel.send({
-      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase("tr-TR")}**`
+      content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase("tr-TR")}**  ${altar}`
     })
 }
 
@@ -155,60 +174,97 @@ function isLastRemainingInitial (remainingWordIndex,remainingWords) {
   let nextWordInitial;
   let result = false;
 
-  console.log("initial "+ initial);
-  if (remainingWordIndex != 0){
-    console.log("pwi word "+remainingWords[remainingWordIndex-1]+ " index " + (remainingWordIndex-1) );
-    
+  if (remainingWordIndex != 0){  
     let previousWordInitial = remainingWords[remainingWordIndex-1].charAt(0);
-    console.log("pwi "+previousWordInitial);
     result = (previousWordInitial == initial);
-    console.log("result "+result);
   }
-  console.log("rw.length " + remainingWords.length);
   if (remainingWordIndex != remainingWords.length){
-    console.log("nwi word "+remainingWords[remainingWordIndex+1]+ " index " + (remainingWordIndex+1));
     let nextWordInitial = remainingWords[remainingWordIndex+1].charAt(0);
-    console.log("nwi "+ nextWordInitial);
-    console.log("nwi==init "+ (nextWordInitial == initial));
     result = result || (nextWordInitial == initial);
-    console.log("result "+result);
   }
   if(result) {
     let t1 = performance.now();
     console.log("isLastRemainingInitial completed in " + (t1-t0));
     return
     }
+
   let t1 = performance.now();
   console.log("isLastRemainingInitial completed in " + (t1-t0));
   console.log(initial+" is depleted.");
   depletedInitials.push(initial);
 }
 
+function isNumeric(val) {
+    return /^-?\d+$/.test(val);
+}
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-//start the game
-initialise(dictionary,200);
 
-//Evaluate the answer
 
+
+//Evaluate message
 client.on('messageCreate', (message) => {
   console.timeLog("upTime");
-  // get emotes -- !! move these out of the event handler once the channel is set !! --
-  let emote0 = performance.now();
-  let altarSopali = message.guild.emojis.cache.find(emoji => emoji.name === "altarsopali");
-  let taam = message.guild.emojis.cache.find(emoji => emoji.name === "taamtaaminandim");
-  let emote1 = performance.now();
-  console.log("emotes found in " + (emote1 - emote0) + " milliseconds.");
-
-  word = message.content.toString().toLocaleLowerCase("tr-TR");
   
-
-  console.log(word);
   let t0 = performance.now();
   if (message.author.bot) return;
+
+  console.log("type of channel "+typeof channel);
+  // restrict to the channel
+  if (typeof channel !== 'undefined') {
+    console.log("checking channel... ")
+    if (message.channel !== channel) return;
+  }
+
+  word = message.content.toString().toLocaleLowerCase("tr-TR");
+  console.log(word);
   if (word.startsWith('.')) return;
+
+  //COMMANDS
+  if (word.startsWith(';;başlat')){
+    let commands = word.split(' ');
+    let winlimit = commands[1];
+
+    if (typeof winlimit === 'undefined') {
+      message.reply ("kelime limiti belirlenmeli! -- ;;başlat kelime_limiti --")
+      return;
+    }
+    
+    if (isNumeric(winlimit)) {
+      winlimit = parseInt(winlimit); 
+      if ((winlimit >= 0) && (winlimit < 1000000)) {
+        initialise(dictionary,winlimit,message);
+        remindStartingLetter(startingLetter,message);
+        let t1 = performance.now();
+        console.log("starting eval completed in "+ (t1-t0));
+        return;
+      }
+      else {
+        message.reply ("geçersiz komut! -- 0 ila 1000000 arasında olmalı ---")
+      }
+    }
+    else {
+      message.reply ("geçersiz komut!")
+    }
+    let t1 = performance.now();
+    console.log("starting eval completed in "+ (t1-t0));
+    return;
+  }
+
+  if (word.startsWith(";;durdur")){
+    gate = false;
+    channel = undefined;
+    message.reply ("durduruldu. başlatmak için: ';;başlat kelime_limiti'")
+    return;
+  }
+
+  // see if the game should start
+  if (gate == false) return;
+
+              // START OF THE GAME
 
   if (!isLetter(word)) {
     message.reply({
@@ -279,9 +335,8 @@ client.on('messageCreate', (message) => {
   }  
 
   // CHECK WIN CONDITION. Deny answer if winning answer is submitted before the answer limit
-
-  var remainingWordIndex = checkRemainingWords(remainingWords,word)
-
+  console.log("DI "+ depletedInitials);
+  console.log("word.slice(-1)"+ word.slice(-1))
   if (depletedInitials.includes(word.slice(-1))) {
     if (answerCount >= winAnswerCountLimit){
       winFlag = true;
@@ -292,7 +347,6 @@ client.on('messageCreate', (message) => {
     }
   }
   
-  
   // SUCCESS  
    {
     message.react('✅');
@@ -300,19 +354,25 @@ client.on('messageCreate', (message) => {
     // check if the answer ends the game
     if (winFlag) {
       // End the game and reset it
-      console.log("oyun bitti");
-      message.channel.send({
-      content: 'oyun bitti'
+      console.log("oyunu bitti!");
+      message.reply({
+      content: 'Oyunu bitirdin!'
       })
+      message.channel.send(`${cemismont}\n\n\n`);
       winFlag = false;
-      initialise(dictionary,2);
+
+      //reset
+      message.channel.send("Tekrar başlıyor.");
+      message.channel.send(`${ebu_leheb}`);
+      initialise(dictionary,winAnswerCountLimit,message);
+      remindStartingLetter(startingLetter,message);
       let t1 = performance.now();
       console.log("replied in " + (t1 - t0) + " milliseconds.");
       return;
     }
 
     // Assign lastletter and mark the word as used and remove it from the remainingWords. check if initial is depleted.
-    console.log("rwi"+remainingWordIndex);
+    let remainingWordIndex = checkRemainingWords(remainingWords,word)
     isLastRemainingInitial(remainingWordIndex,remainingWords);
     startingLetter = word.slice(-1);
     keyValueDictionary[wordIndex][1] = 1;
