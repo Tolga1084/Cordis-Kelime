@@ -9,13 +9,14 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 // ================= START BOT CODE ===================
 
 /* FEATURES TO IMPLEMENT
-  - command system
+  - purge the dictionary of duplicate words.
   - styled messages for informing users. -- score tables, starting letter etc... --
   - scoring
   - option for players to play against the bot
+  - custom reactions for certain players
   - suggest a word if a player asks for help -- could have limited uses per player for each day --
   - suggestions to correct typos in answers: "did you mean ... ?"
-  - show dictionary meaning
+  - show dictionary meaning (button reaction below an answer fon inquiry?)
   - voting in new words
 */
 const { Client, Intents } = require('discord.js');
@@ -23,6 +24,8 @@ const { PerformanceObserver, performance } = require('perf_hooks');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 const DISCORD_TOKEN = process.env['DISCORD_TOKEN'];
 const Database = require("@replit/database");
+
+client.login(process.env.DISCORD_TOKEN);
 
 // server uptime
 console.time("upTime");
@@ -103,8 +106,9 @@ function checkWord(arr, x) {
   let l = 0, r = arr.length - 1;
   while (l <= r) {
     let m = l + Math.floor((r - l) / 2);
-    let res = x.localeCompare(arr[m][0],"tr-TR");
+    let res = x.localeCompare(arr[m][0],"tr-TR",{ sensitivity: 'base' });
     // Check if x is present at mid
+    console.log(x +" " + arr[m][0]);
     if (res == 0)
       return m;
 
@@ -127,7 +131,7 @@ function checkRemainingWords(arr, x) {
   while (l <= r) {
     let m = l + Math.floor((r - l) / 2);
     //console.log(arr[m] + "  " + arr[m])
-    let res = x.localeCompare(arr[m],"tr-TR");
+    let res = x.localeCompare(arr[m],"tr-TR",{ sensitivity: 'base' });
     // Check if x is present at mid
     if (res == 0)
       return m;
@@ -144,7 +148,7 @@ function checkRemainingWords(arr, x) {
 }
 
 function isLetter(str) {
-  let res = /^[a-zA-Z' 'wığüşöçĞÜŞÖÇİ]+$/.test(str);
+  let res = /^[a-zA-Z' 'âwığüşöçÂĞÜŞÖÇİ]+$/.test(str);
   //console.log('isLetter ' + res);
   return res;
 }
@@ -160,8 +164,8 @@ function checkStartingLetter(str, startingLetter) {
   return str.startsWith(startingLetter.toLocaleLowerCase("tr-TR"));
 }
 
-function remindStartingLetter(startingLetter, message) {
-  message.channel.send({
+function remindStartingLetter(startingLetter, channel) {
+  channel.send({
       content: 'başlangıç harfi ' + `**${startingLetter.toLocaleUpperCase("tr-TR")}**  ${altar}`
     })
 }
@@ -183,13 +187,8 @@ function isLastRemainingInitial (remainingWordIndex,remainingWords) {
     result = result || (nextWordInitial == initial);
   }
   if(result) {
-    let t1 = performance.now();
-    console.log("isLastRemainingInitial completed in " + (t1-t0));
     return
     }
-
-  let t1 = performance.now();
-  console.log("isLastRemainingInitial completed in " + (t1-t0));
   console.log(initial+" is depleted.");
   depletedInitials.push(initial);
 }
@@ -203,9 +202,7 @@ client.on('ready', () => {
 });
 
 
-
-
-//Evaluate message
+//EVALUATE MESSAGE
 client.on('messageCreate', (message) => {
   console.timeLog("upTime");
   
@@ -216,7 +213,10 @@ client.on('messageCreate', (message) => {
   // restrict to the channel
   if (typeof channel !== 'undefined') {
     console.log("checking channel... ")
-    if (message.channel !== channel) return;
+    if (message.channel !== channel) {
+      console.log("incorrect channel!");
+      return;
+    }
   }
 
   word = message.content.toString().toLocaleLowerCase("tr-TR");
@@ -237,7 +237,7 @@ client.on('messageCreate', (message) => {
       winlimit = parseInt(winlimit); 
       if ((winlimit >= 0) && (winlimit < 1000000)) {
         initialise(dictionary,winlimit,message);
-        remindStartingLetter(startingLetter,message);
+        remindStartingLetter(startingLetter,channel);
         let t1 = performance.now();
         console.log("starting eval completed in "+ (t1-t0));
         return;
@@ -270,7 +270,7 @@ client.on('messageCreate', (message) => {
     message.reply({
       content: 'sadece harf kullanabilirsin!' + `${altarSopali}`
     })
-    remindStartingLetter(startingLetter,message);
+    remindStartingLetter(startingLetter,channel);
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
     return;
@@ -283,7 +283,7 @@ client.on('messageCreate', (message) => {
     message.reply({
       content: 'sen sıranı savdın!' + `${altarSopali}`
     })
-    remindStartingLetter(startingLetter,message);
+    remindStartingLetter(startingLetter,channel);
     return;
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
@@ -295,7 +295,7 @@ client.on('messageCreate', (message) => {
     message.reply({
       content: 'sadece tek kelime kullanabilirsin!' + `${altarSopali}`
     })
-    remindStartingLetter(startingLetter,message);
+    remindStartingLetter(startingLetter,channel);
 
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
@@ -318,7 +318,7 @@ client.on('messageCreate', (message) => {
   
   if (wordIndex == -1) {
       message.reply(`${taam}`);
-      remindStartingLetter(startingLetter,message);
+      remindStartingLetter(startingLetter,channel);
 
     let t1 = performance.now();
     console.log("replied in " + (t1 - t0) + " milliseconds.");
@@ -358,14 +358,16 @@ client.on('messageCreate', (message) => {
       message.reply({
       content: 'Oyunu bitirdin!'
       })
-      message.channel.send(`${cemismont}\n\n\n`);
+      channel.send(`${cemismont}
+      `);
+      channel.send(`-------\n-------`)
       winFlag = false;
 
       //reset
-      message.channel.send("Tekrar başlıyor.");
-      message.channel.send(`${ebu_leheb}`);
+      channel.send("Tekrar başlıyor.");
+      channel.send(`${ebu_leheb}`);
       initialise(dictionary,winAnswerCountLimit,message);
-      remindStartingLetter(startingLetter,message);
+      remindStartingLetter(startingLetter,channel);
       let t1 = performance.now();
       console.log("replied in " + (t1 - t0) + " milliseconds.");
       return;
@@ -378,10 +380,9 @@ client.on('messageCreate', (message) => {
     keyValueDictionary[wordIndex][1] = 1;
     remainingWords.splice(remainingWordIndex,1);
     answerCount++;
-    //lastAnswerer = message.author;
+    lastAnswerer = message.author;
   }
   let t1 = performance.now();
   console.log("replied in " + (t1 - t0) + " milliseconds.\n\n");
 })
 
-client.login(process.env.DISCORD_TOKEN);
