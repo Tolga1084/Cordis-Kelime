@@ -16,8 +16,9 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
   - custom reactions for certain players
   - suggest a word if a player asks for help -- could have limited uses per player for each day --
   - suggestions to correct typos in answers: "did you mean ... ?"
-  - show dictionary meaning (button reaction below an answer fon inquiry?)
+  - show dictionary meaning (button reaction below an answer for inquiry?)
   - voting in new words
+  - offensive abilities ??? 
 */
 const { Client, Intents } = require('discord.js');
 const { PerformanceObserver, performance } = require('perf_hooks');
@@ -36,11 +37,11 @@ const dictDB = new Database();
 // Import dictionary.txt to array
 var fs = require("fs");
 var TR = fs.readFileSync("./TDK.txt");
-var dictionary = TR.toString().toLowerCase().split("\n");
+var dictionary = TR.toString().toLocaleLowerCase('tr-Tr').split("\n");
 
 // Sort Turkish characters alphabetically
 dictionary.sort(function(a, b) {
-  return a.localeCompare(b,"tr-TR");
+  return a.localeCompare(b,"tr-TR",{ sensitivity: 'base' });
 });
 
 
@@ -172,7 +173,6 @@ function remindStartingLetter(startingLetter, channel) {
 
 // Keep track of depleted initials
 function isLastRemainingInitial (remainingWordIndex,remainingWords) {
-  let t0 = performance.now();
   let initial = remainingWords[remainingWordIndex].charAt(0);
   let previousWordInitial;
   let nextWordInitial;
@@ -354,13 +354,13 @@ client.on('messageCreate', (message) => {
     // check if the answer ends the game
     if (winFlag) {
       // End the game and reset it
-      console.log("oyunu bitti!");
+      console.log("oyun bitti!");
       message.reply({
       content: 'Oyunu bitirdin!'
       })
       channel.send(`${cemismont}
       `);
-      channel.send(`-------\n-------`)
+      channel.send(`-------\n\n-------`)
       winFlag = false;
 
       //reset
